@@ -62,7 +62,6 @@ import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.ScanResultConsumer;
-import org.apache.hadoop.hbase.util.Threads;
 import org.apache.hbase.thirdparty.io.netty.util.HashedWheelTimer;
 import org.apache.hbase.thirdparty.io.netty.util.Timeout;
 import org.apache.hbase.thirdparty.io.netty.util.Timer;
@@ -73,6 +72,7 @@ import org.slf4j.LoggerFactory;
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.stumbleupon.async.Callback;
 import com.stumbleupon.async.Deferred;
 
@@ -99,7 +99,8 @@ public final class HBaseClient {
    * TODO(tsuna): Make the tick duration configurable?
    */
   private final HashedWheelTimer
-      timer = new HashedWheelTimer(Threads.newDaemonThreadFactory("Flush-Timer"), 20, MILLISECONDS);
+      timer = new HashedWheelTimer(new ThreadFactoryBuilder().setDaemon(true)
+          .setNameFormat("Flush-Timer-%d").build(), 20, MILLISECONDS);
 
   /** Up to how many milliseconds can we buffer an edit on the client side.  */
   private volatile short flush_interval = 1000;  // ms
@@ -287,7 +288,13 @@ public final class HBaseClient {
   public HBaseClient(final Configuration configuration, final ExecutorService executor) {
     this.executor = executor;
     num_connections_created.increment();
-    hbase_config = BigtableConfiguration.asyncConfigure(configuration);
+    hbase_config = configuration;
+    // asyncConfigure() was removed. These are the keys configure() sets so
+    // ConnectionFactory.createAsyncConnection uses the Bigtable client on HBase 2.3+.
+    hbase_config.set(BigtableConfiguration.HBASE_CLIENT_ASYNC_CONNECTION_IMPL,
+        "org.apache.hadoop.hbase.client.BigtableAsyncConnection");
+    hbase_config.set(BigtableConfiguration.HBASE_CLIENT_ASYNC_REGISTRY_IMPL,
+        "org.apache.hadoop.hbase.client.BigtableConnectionRegistry");
     LOG.info("BigTable API: Connecting with config: {}", hbase_config);
     
     try {

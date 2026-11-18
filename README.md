@@ -44,6 +44,10 @@ Integration tests can be run as follows:
 
 This project uses [Semantic Versioning](http://semver.org/).
 
+### 0.4.4
+
+- Updated dependency to `com.google.cloud.bigtable:bigtable-hbase-2.x-hadoop:2.21.0`
+
 ### 0.4.3
 
 - Updated dependency to `com.google.cloud.bigtable:bigtable-hbase-2.x-hadoop:1.23.0`

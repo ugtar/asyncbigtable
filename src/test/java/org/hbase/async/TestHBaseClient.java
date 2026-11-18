@@ -31,6 +31,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import com.google.cloud.bigtable.hbase.BigtableConfiguration;
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory;
 
 @RunWith(JUnit4.class)
 public class TestHBaseClient {
@@ -41,6 +42,9 @@ public class TestHBaseClient {
   @Test
   public void testConnect() {
     Configuration conf = BigtableConfiguration.configure("someProjectId", "someInstanceId");
+    // The client now resolves credentials while opening the connection. This
+    // unit test only checks that a connection can be constructed.
+    conf.setBoolean(BigtableOptionsFactory.BIGTABLE_NULL_CREDENTIAL_ENABLE_KEY, true);
     @SuppressWarnings("unused")
     HBaseClient client = new HBaseClient(conf, null);
   }

@@ -3,7 +3,7 @@
 
   <groupId>com.pythian.opentsdb</groupId>
   <artifactId>asyncbigtable</artifactId>
-  <version>0.4.3</version>
+  <version>0.4.4</version>
   <packaging>jar</packaging>
 
   <name>Async Bigtable library</name>
@@ -252,7 +252,19 @@
     <dependency>
       <groupId>com.google.cloud.bigtable</groupId>
       <artifactId>bigtable-hbase-2.x-hadoop</artifactId>
-      <version>1.23.0</version>
+      <version>2.21.0</version>
+      <exclusions>
+        <!-- hadoop-common brings a log4j binding that loops with log4j-over-slf4j.
+             Callers (OpenTSDB) supply their own SLF4J binding. -->
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-reload4j</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>ch.qos.reload4j</groupId>
+          <artifactId>reload4j</artifactId>
+        </exclusion>
+      </exclusions>
      </dependency>
 
     <!-- runtime dependencies -->
@@ -274,6 +286,17 @@
       <groupId>commons-configuration</groupId>
       <artifactId>commons-configuration</artifactId>
       <version>1.10</version>
+    </dependency>
+
+    <!-- JAXB was removed from the JDK in Java 11. OpenTSDB uses
+         javax.xml.bind.DatatypeConverter for hex/base64 helpers, and older
+         asyncbigtable jars (e.g. 0.4.3) shipped jaxb-api inside the
+         jar-with-dependencies. Bundle it here so callers on JDK 11+ keep
+         working without adding JAXB themselves. -->
+    <dependency>
+      <groupId>javax.xml.bind</groupId>
+      <artifactId>jaxb-api</artifactId>
+      <version>2.3.1</version>
     </dependency>
 
     <!-- test dependencies -->
